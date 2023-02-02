@@ -1,4 +1,5 @@
 import { ObjectIdentity } from "./configuration/object-identity.js";
+import { CustomObjectIdentity } from "./configuration/custom-object-identity.js";
 
 export class DuplicationRemover {
   sanitize(value) {
@@ -31,7 +32,7 @@ export class DuplicationRemover {
   #removeDuplicates(array) {
     const keys = new Set();
 
-    const identity = new ObjectIdentity();
+    const identity = new CustomObjectIdentity(["key"]);
 
     return array.filter((item) => {
       const key = identity.generateIdentity(item);
