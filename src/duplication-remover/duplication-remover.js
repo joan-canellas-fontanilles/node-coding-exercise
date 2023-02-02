@@ -1,7 +1,27 @@
-import { ObjectIdentity } from "./configuration/object-identity.js";
 import { CustomObjectIdentity } from "./configuration/custom-object-identity.js";
+import { ObjectIdentity } from "./configuration/object-identity.js";
 
 export class DuplicationRemover {
+  #config = [];
+
+  constructor(config) {
+    if (!this.#validateConfig(config)) {
+      throw new Error("A valid configuration must be supplied");
+    }
+    this.#config = config;
+  }
+
+  #validateConfig(config) {
+    const isArray = Array.isArray(config) && config.length !== 0;
+    const correctType = config?.every(
+      (config) =>
+        config.objectPathRegex instanceof RegExp &&
+        (config.identity instanceof ObjectIdentity || config.identity === null)
+    );
+
+    return isArray && correctType;
+  }
+
   sanitize(value) {
     return this.#sanitizeValue(value);
   }
