@@ -1,4 +1,3 @@
-import { CustomObjectIdentity } from "./configuration/custom-object-identity.js";
 import { ObjectIdentity } from "./configuration/object-identity.js";
 
 export class DuplicationRemover {
@@ -26,33 +25,49 @@ export class DuplicationRemover {
     return this.#sanitizeValue(value);
   }
 
-  #sanitizeValue(value) {
-    return this.#sanitizeArray(value) || this.#sanitizeObject(value) || value;
+  #joinPath(path, propertyValue) {
+    path = path ? `${path}.` : "";
+    if (typeof propertyValue === "number") {
+      return `${path}[${propertyValue}]`;
+    }
+    return `${path}${propertyValue}`;
   }
 
-  #sanitizeArray(array) {
-    if (!array || !Array.isArray(array)) return;
-
-    return this.#removeDuplicates(array).map((item) =>
-      this.#sanitizeValue(item)
+  #sanitizeValue(value, path = "") {
+    return (
+      this.#sanitizeArray(value, path) ||
+      this.#sanitizeObject(value, path) ||
+      value
     );
   }
 
-  #sanitizeObject(object) {
+  #sanitizeArray(array, path = "") {
+    if (!array || !Array.isArray(array)) return;
+
+    return this.#removeDuplicates(array, path).map((item, index) =>
+      this.#sanitizeValue(item, this.#joinPath(path, index))
+    );
+  }
+
+  #sanitizeObject(object, path = "") {
     if (!object || typeof object !== "object") return;
     const entries = Object.entries(object).map(
       ([propertyName, propertyValue]) => [
         propertyName,
-        this.#sanitizeValue(propertyValue),
+        this.#sanitizeValue(propertyValue, this.#joinPath(path, propertyName)),
       ]
     );
     return Object.fromEntries(entries);
   }
 
-  #removeDuplicates(array) {
+  #removeDuplicates(array, path) {
     const keys = new Set();
 
-    const identity = new CustomObjectIdentity(["key"]);
+    const { identity } = this.#config.find(({ objectPathRegex }) =>
+      objectPathRegex.test(path)
+    );
+
+    if (identity === null) return array;
 
     return array.filter((item) => {
       const key = identity.generateIdentity(item);
