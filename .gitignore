@@ -2,5 +2,3 @@
 /data
 
 /.idea
-
-!/data/mock_application.json
